@@ -1,0 +1,20 @@
+{
+    "name": "sts/core",
+    "description": "Core library for STS framework",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Numele Tău",
+            "email": "emailul_tau@example.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "STS\\Core\\": "src/Core/"
+        }
+    },
+    "require": {
+        "php": ">=8.2"
+    }
+}
