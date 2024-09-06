@@ -1,6 +1,6 @@
 <?php
 // src/Core/Autoloader.php
-namespace STS\Core\Utils;
+namespace STS\Core;
 
 use STS\Core\Utils\FileCache;
 
