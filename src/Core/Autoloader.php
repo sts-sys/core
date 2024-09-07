@@ -3,17 +3,20 @@
 namespace STS\Core;
 
 use STS\Core\Utils\FileCache;
+use STS\Core\Utils\LazyLoader;
 
 class Autoloader
 {
     protected $classMap = [];
     protected $namespaceMap = [];
     protected $cache;
+    protected $lastCheckedTime;
 
     public function __construct(string $cacheFile)
     {
         $this->cache = new FileCache($cacheFile);
         $this->classMap = $this->cache->get('class_map') ?? [];
+        $this->lastCheckedTime = $this->cache->get('last_checked_time') ?? time();
     }
 
     // Înregistrează autoloader-ul
@@ -37,7 +40,7 @@ class Autoloader
     // Încărca o clasă
     public function autoload(string $class): void
     {
-        $startTime = microtime(true);
+        $this->checkForNewFiles();
 
         if (isset($this->classMap[$class])) {
             $this->requireFile($this->classMap[$class]);
@@ -53,9 +56,6 @@ class Autoloader
                     $this->addClassMap($class, $file);
                     $this->cache->set('class_map', $this->classMap);
                     $this->cache->saveCache();
-
-                    $endTime = microtime(true);
-                    error_log("Class $class loaded in " . ($endTime - $startTime) . " seconds.");
                     return;
                 }
             }
@@ -84,20 +84,38 @@ class Autoloader
         }
     }
 
-    // Generarea hărții statice a claselor
-    public function generateClassMap(string $directory): void
+    // Verifică dacă există fișiere noi sau modificări în directoare
+    protected function checkForNewFiles(): void
+    {
+        $currentTime = time();
+        // Verificăm dacă a trecut un interval de timp specificat (ex. 5 minute) de la ultima verificare
+        if ($currentTime - $this->lastCheckedTime < 300) { // 300 secunde (5 minute)
+            return;
+        }
+
+        foreach ($this->namespaceMap as $namespace => $directory) {
+            $this->scanDirectoryForChanges($directory);
+        }
+
+        $this->lastCheckedTime = $currentTime;
+        $this->cache->set('last_checked_time', $this->lastCheckedTime);
+        $this->cache->saveCache();
+    }
+
+    // Scanează un director pentru a detecta modificări sau fișiere noi
+    protected function scanDirectoryForChanges(string $directory): void
     {
         $iterator = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($directory));
         foreach ($iterator as $file) {
             if ($file->isFile() && $file->getExtension() === 'php') {
                 $className = $this->getClassNameFromFile($file->getPathname());
-                if ($className) {
+                if ($className && !isset($this->classMap[$className])) {
+                    // Fișier nou detectat, îl adăugăm la harta de clase
                     $this->classMap[$className] = $file->getPathname();
+                    error_log("New class detected: $className in file {$file->getPathname()}");
                 }
             }
         }
-        $this->cache->set('class_map', $this->classMap);
-        $this->cache->saveCache();
     }
 
     // Obține numele clasei dintr-un fișier PHP
