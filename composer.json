@@ -18,7 +18,5 @@
     },
     "require": {
         "php": ">=8.2",
-    },
-    "type": "vcs",
-    "url": "https://github.com/sts-sys/core"
+    }
 }
