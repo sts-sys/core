@@ -3,10 +3,12 @@
     "description": "Core library for STS framework",
     "type": "library",
     "license": "MIT",
+    "version": "1.0.x",
+    "prefer-stable": true,
     "authors": [
         {
-            "name": "Numele Tău",
-            "email": "emailul_tau@example.com"
+            "name": "Staark",
+            "email": "ionuzcostin@gmail.com"
         }
     ],
     "autoload": {
@@ -15,6 +17,8 @@
         }
     },
     "require": {
-        "php": ">=8.2"
-    }
+        "php": ">=8.2",
+    },
+    "type": "vcs",
+    "url": "https://github.com/sts-sys/core"
 }
