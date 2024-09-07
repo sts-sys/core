@@ -1,5 +1,5 @@
 <?php
-namespace MyApp\Core;
+namespace STS\Core;
 
 use STS\Core\Containers\ServiceContainer;
 
