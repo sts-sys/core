@@ -1,3 +1,4 @@
+<?php
 // fallback_autoload.php
 
 function sts_fallback_autoload($className)
