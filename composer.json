@@ -2,6 +2,7 @@
     "name": "sts/core",
     "description": "Core library for STS framework",
     "type": "library",
+    "keywords": ["core", "sts", "library", "framework"],
     "license": "MIT",
     "version": "1.0.x",
     "prefer-stable": true,
