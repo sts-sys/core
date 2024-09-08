@@ -20,13 +20,13 @@ class Kernel {
         }
         
         // Încarcă rutele utilizând un manager de rute dedicat
-        $routeManager = $this->container->make('RouteManager');
+        $routeManager = $this->container->get('RouteManager');
         $routeManager->loadRoutesFromFile(sprintf("%s/routes/web.php", ROOT_PATH));
     }
 
     public function handleRequest(Request $request): Response {
         // Creează o instan��ă a managerului de rute
-        $routeManager = $this->container->make('RouteManager');
+        $routeManager = $this->container->get('RouteManager');
         
         // Verifica dacă cererea există ��n managerul de rute
         if ($routeManager->hasRoute($request)) {

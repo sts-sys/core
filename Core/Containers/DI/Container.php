@@ -25,6 +25,13 @@ class Container {
     protected array $instances = [];
 
     /**
+     * Instanta singleton a containerului.
+     * 
+     * @var self|null $instance
+     */
+    protected static ?self $instance = null; // Instanța singleton a containerului
+
+    /**
      * Cache pentru reflecții.
      *
      * @var array
@@ -53,14 +60,28 @@ class Container {
     protected array $middleware = []; // Middleware-uri înregistrate
 
     /**
-     * Constructor.
+     * Constructor privat pentru a preveni instanțierea directă.
      * 
      * @param EventDispatcher $dispatcher
      * @return void
      */
-    public function __construct()
+    private function __construct()
     {
         $this->dispatcher = new EventDispatcher(); // Inițializăm EventDispatcher
+    }
+
+    /**
+     * Obține instanța singleton a containerului.
+     *
+     * @return self
+     */
+    public static function getInstance(): self
+    {
+        if (self::$instance === null) {
+            self::$instance = new self();
+        }
+
+        return self::$instance;
     }
 
     /**
@@ -102,6 +123,39 @@ class Container {
      */
     public function get(string $abstract)
     {
+        // Verifică dacă instanța a fost deja creată (singleton)
+        if (isset($this->instances[$abstract])) {
+            return $this->instances[$abstract];
+        }
+
+        // Verifică dacă serviciul este înregistrat în container
+        if (isset($this->bindings[$abstract])) {
+            $binding = $this->bindings[$abstract];
+
+            // Creează instanța folosind funcția 'concrete' sau direct prin numele clasei
+            $object = is_callable($binding['concrete']) 
+                ? $binding['concrete']($this) 
+                : new $binding['concrete']();
+
+            // Stochează instanța dacă este un serviciu 'shared' (singleton)
+            if ($binding['shared']) {
+                $this->instances[$abstract] = $object;
+            }
+
+            // Trimite un eveniment de tip 'service.resolved' după rezolvarea serviciului
+            if ($this->dispatcher) {
+                $this->dispatcher->dispatch('service.resolved', [$abstract, $object]);
+            }
+
+            return $object;
+        }
+
+        // Dacă serviciul nu este înregistrat, încearcă să rezolve direct numele clasei
+        return $this->resolve($abstract);
+    }
+
+    /*public function get(string $abstract)
+    {
         if (isset($this->instances[$abstract])) {
             return $this->instances[$abstract];
         }
@@ -121,7 +175,7 @@ class Container {
         }
 
         return $this->resolve($abstract);
-    }
+    }*/
 
         /**
      * Verifică dacă containerul are un serviciu înregistrat.
@@ -143,33 +197,39 @@ class Container {
      */
     protected function resolve(string $abstract)
     {
+        // Verifică dacă clasa există
         if (!class_exists($abstract)) {
             throw new CoreException("Class {$abstract} does not exist.", 1002, ['class' => $abstract], 'critical');
         }
-
+    
+        // Utilizează cache-ul pentru reflecție, dacă există
         if (isset($this->reflectionCache[$abstract])) {
             $reflection = $this->reflectionCache[$abstract];
         } else {
             $reflection = new ReflectionClass($abstract);
             $this->reflectionCache[$abstract] = $reflection;
         }
-
+    
         $constructor = $reflection->getConstructor();
-
+    
+        // Creează o instanță direct dacă nu există constructor
         if (is_null($constructor)) {
             $instance = new $abstract;
         } else {
+            // Obține dependențele constructorului
             $parameters = $constructor->getParameters();
             $dependencies = $this->resolveDependencies($parameters);
             $instance = $reflection->newInstanceArgs($dependencies);
         }
-
+    
         // Trimite un eveniment de tip 'service.resolved' după crearea instanței
-        $this->dispatcher->dispatch('service.resolved', $abstract, $instance);
-
-        return $reflection->newInstanceArgs($dependencies);
+        if ($this->dispatcher) {
+            $this->dispatcher->dispatch('service.resolved', [$abstract, $instance]);
+        }
+    
+        return $instance;
     }
-
+    
     /**
      * Rezolvă dependențele constructorului unei clase.
      *
@@ -182,21 +242,21 @@ class Container {
         $dependencies = [];
 
         foreach ($parameters as $parameter) {
-            $dependency = $parameter->getClass();
-
-            if ($dependency === null) {
-                throw new CoreException("Cannot resolve the dependency '{$parameter->name}'", 404, ['class' => $abstract], 'critical');
-            }
-
-            if (isset($this->resolvedDependenciesCache[$dependency->name])) {
-                $dependencies[] = $this->resolvedDependenciesCache[$dependency->name];
+            $type = $parameter->getType();
+    
+            // Verifică dacă tipul este definit și este de tip ReflectionNamedType
+            if ($type instanceof \ReflectionNamedType && !$type->isBuiltin()) {
+                $dependencies[] = $this->get($type->getName());
             } else {
-                $resolved = $this->get($dependency->name);
-                $this->resolvedDependenciesCache[$dependency->name] = $resolved;
-                $dependencies[] = $resolved;
+                // Dacă parametrul nu este de un tip de clasă, tratează-l ca o excepție sau oferă o valoare implicită
+                if ($parameter->isDefaultValueAvailable()) {
+                    $dependencies[] = $parameter->getDefaultValue();
+                } else {
+                    throw new Exception("Nu pot rezolva dependența pentru parametru: " . $parameter->getName());
+                }
             }
         }
-
+    
         return $dependencies;
     }
 
@@ -239,6 +299,7 @@ class Container {
 
         $this->bindings[$alias] = &$this->bindings[$abstract];
     }
+
 
     /**
      * Înregistrează un middleware.
@@ -297,5 +358,16 @@ class Container {
     public function off(string $event, callable $listener): void
     {
         $this->dispatcher->removeListener($event, $listener);
+    }
+
+    /**
+     * Apelează o metodă pe o instanță.
+     *
+     * @param callable $callback
+     * @return mixed
+     */
+    public function call(callable $callback)
+    {
+        return call_user_func($callback);
     }
 }

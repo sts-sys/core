@@ -18,7 +18,7 @@ class Request {
         $this->sessions = $sessions;
     }
 
-    public static function collection(): self {
+    public static function collect(): self {
         $get = $_GET;
         $post = $_POST;
         $server = $_SERVER;

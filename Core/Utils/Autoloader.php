@@ -8,10 +8,11 @@ require_once dirname(__DIR__) . '/Utils/FileCache.php';
 use STS\Core\Utils\FileCache;
 
 final class Autoloader {
-    protected $classMap = [];
-    protected $namespaceMap = [];
-    protected $cache;
-    protected $lastCheckedTime;
+    protected array $classMap = [];
+    protected array $namespaceMap = [];
+    protected array $autoloadFiles = [];
+    protected ?FileCache $cache;
+    protected int $lastCheckedTime;
 
     public function __construct(string $cacheDir)
     {
@@ -25,6 +26,9 @@ final class Autoloader {
     public function register(): void
     {
         spl_autoload_register([$this, 'autoload']);
+        foreach ($this->autoloadFiles as $file) {
+            require_once $file;
+        }
     }
 
     public function addClassMap(string $class, string $file): void
@@ -35,6 +39,13 @@ final class Autoloader {
     public function addNamespaceMap(string $namespace, string $baseDir): void
     {
         $this->namespaceMap[$namespace] = rtrim($baseDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+    }
+
+    public function autoloadNamespaces(array $namespaces): void
+    {
+        foreach ($namespaces as $namespace => $directory) {
+            $this->addNamespaceMap($namespace, $directory);
+        }
     }
 
     public function autoload(string $class): void
@@ -60,7 +71,7 @@ final class Autoloader {
             }
         }
 
-        error_log("Class $class could not be loaded.", 0, "/cache/error.log", true);
+        error_log("Class $class could not be loaded.", 0, "/cache/error.log");
     }
 
     protected function requireFile(string $file): bool
@@ -118,6 +129,23 @@ final class Autoloader {
         }
     }
 
+    /**
+     * Utilizează regular expressions pentru a determina numele clasei din un fisiere
+     * 
+     * @param string $filePath Calea către fisierul PHP
+     * @return void 
+     */
+    public function autoloadFiles(array $filePaths): void
+    {
+        foreach ($filePaths as $filePath) {
+            if (file_exists($filePath)) {
+                $this->autoloadFiles = $filePaths;
+            } else {
+                throw new \RuntimeException(sprintf('The file "%s" could not be found.', $filePath));
+            }
+        }
+    }
+
     // Definirea metodei generateClassMap()
     public function generateClassMap(string $directory): void
     {
@@ -151,7 +179,7 @@ final class Autoloader {
     }
     
     // Definirea metodei checkCacheDirectory()
-    public function checkCacheDirectory(string $directory): void
+    protected function checkCacheDirectory(string $directory): void
     {
         $cacheDir = $directory;
         $cacheFile = $cacheDir . 'autoload_cache.php';

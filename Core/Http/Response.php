@@ -51,6 +51,18 @@ class Response {
         return $this;
     }
 
+    /**
+     * Setează conținutul răspunsului.
+     *
+     * @param string $content
+     * @return $this
+     */
+    public function setContent(string $content): self
+    {
+        $this->body = $content;
+        return $this;
+    }
+
     // Obține corpul răspunsului
     public function getBody(): string {
         return $this->body;
@@ -162,13 +174,16 @@ class Response {
     }
     
     public function send() {
+        ob_start();
         // Execută middleware-urile
         foreach ($this->middleware as $callback) {
             call_user_func($callback, $this);
         }
     
         // Setează codul de stare HTTP
-        http_response_code($this->statusCode);
+        if (!headers_sent()) {
+            http_response_code($this->statusCode);
+        }
     
         // Trimite antetele HTTP
         $this->sendHeaders();
@@ -176,7 +191,8 @@ class Response {
         // Trimite cookie-urile
         $this->sendCookies();
     
-        // Trimite corpul răspunsului
+        // Trimit corpul răspunsului
         echo $this->body;
+        ob_end_flush();
     }    
 }

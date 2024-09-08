@@ -12,7 +12,7 @@ function sts_fallback_autoload($className)
     error_log("Class $className could not be found by the primary autoloader.");
 }
 
-function plugin_class_loader($className): bool
+function sts_plugin_class_loader($className): bool
 {
     // Logica de încărcare din plugin-uri
     // Returnează true dacă a fost încărcată clasa
@@ -34,4 +34,4 @@ function sts_modules_class_loader(): bool
 }
 
 // Înregistrează fallback-ul ca autoloader de urgență
-spl_autoload_register('fallback_autoload', true, true);
+spl_autoload_register('sts_fallback_autoload', true, true);
