@@ -21,5 +21,3 @@ $autoloader->autoloadFiles([
 
 // Register the autoloader after registering the namespaces and files
 $autoloader->register();
-
-var_dump($autoloader);
