@@ -1,0 +1,23 @@
+{
+    "name": "sts/core",
+    "description": "Core library for STS framework",
+    "type": "library",
+    "keywords": ["core", "sts", "library", "framework"],
+    "license": "MIT",
+    "version": "1.1.x",
+    "prefer-stable": true,
+    "authors": [
+        {
+            "name": "Staark",
+            "email": "ionuzcostin@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "STS\\Core\\": "src/Core/"
+        }
+    },
+    "require": {
+        "php": "^8.0"
+    }
+}
