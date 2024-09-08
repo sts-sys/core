@@ -27,6 +27,7 @@ class Application
         $this->serviceContainer->bind('HttpKernel', function () {
             return new \STS\Core\Http\Kernel();
         });
+        
         // Înregistrează alți furnizori de servicii, etc.
     }
 
