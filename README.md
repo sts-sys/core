@@ -33,9 +33,9 @@ Acest proiect oferă un sistem de autoloading personalizat pentru o aplicație P
 
 1. **Clonează repository-ul:**
 
-   ```bash
-   git clone https://github.com/username/myapp-core.git
-  ```
+```bash
+  git clone https://github.com/username/myapp-core.git
+```
 
 ```
 require_once __DIR__ . '/src/Utils/FileCache.php';
@@ -58,10 +58,10 @@ $autoloader->generateClassMap(__DIR__ . '/src');
 
 // Înregistrează autoloader-ul
 $autoloader->register();
-```
+``
 
-
-```
+### FileCache
+```bash
 use STS\Core\Utils\FileCache;
 
 $cache = new FileCache('/path/to/cache/autoload_cache.php');
@@ -75,8 +75,7 @@ $cache->saveCache();
 // Obține o valoare din cache
 $value = $cache->get('key');
 ```
-
-
+```bash
 ### Explicații
 
 - **Instalare**: Informații despre cum să clonezi repository-ul și să instalezi dependențele.
