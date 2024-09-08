@@ -75,7 +75,8 @@ $cache->saveCache();
 // Obține o valoare din cache
 $value = $cache->get('key');
 ```
-```bash
+
+
 ### Explicații
 
 - **Instalare**: Informații despre cum să clonezi repository-ul și să instalezi dependențele.
