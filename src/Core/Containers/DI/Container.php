@@ -2,9 +2,12 @@
 namespace STS\Core\Containers\DI;
 
 use \Closure;
-use \Exception;
 use \ReflectionClass;
+use STS\Core\Exceptions\CoreException;
 use STS\Core\Events\EventDispatcher;
+use STS\Core\Http\Middlewares\MiddlewareInterface;
+use STS\Core\Http\Request as RequestInterface;
+use STS\Core\Http\Response as ResponseInterface;
 
 class Container {
         /**
@@ -41,6 +44,13 @@ class Container {
      * @var EventDispatcher 
      */
     protected EventDispatcher $dispatcher; // Adăugăm EventDispatcher
+
+    /**
+     * Middleware-uri înregistrate.
+     *
+     * @var array
+     */
+    protected array $middleware = []; // Middleware-uri înregistrate
 
     /**
      * Constructor.
@@ -129,12 +139,12 @@ class Container {
      *
      * @param string $abstract Numele serviciului
      * @return mixed
-     * @throws Exception
+     * @throws CoreException
      */
     protected function resolve(string $abstract)
     {
         if (!class_exists($abstract)) {
-            throw new Exception("Class {$abstract} does not exist.");
+            throw new CoreException("Class {$abstract} does not exist.", 1002, ['class' => $abstract], 'critical');
         }
 
         if (isset($this->reflectionCache[$abstract])) {
@@ -165,7 +175,7 @@ class Container {
      *
      * @param array $parameters Lista de parametri ai constructorului
      * @return array
-     * @throws Exception
+     * @throws CoreException
      */
     protected function resolveDependencies(array $parameters): array
     {
@@ -175,7 +185,7 @@ class Container {
             $dependency = $parameter->getClass();
 
             if ($dependency === null) {
-                throw new Exception("Cannot resolve the dependency '{$parameter->name}'");
+                throw new CoreException("Cannot resolve the dependency '{$parameter->name}'", 404, ['class' => $abstract], 'critical');
             }
 
             if (isset($this->resolvedDependenciesCache[$dependency->name])) {
@@ -219,10 +229,50 @@ class Container {
      * @param string $alias Numele aliasului
      * @param string $abstract Numele serviciului
      * @return void
+     * @throws CoreException
      */
     public function alias(string $alias, string $abstract): void
     {
+        if (!isset($this->bindings[$abstract])) {
+            throw new CoreException("Serviciul {$abstract} nu este înregistrat în container.", 1003, ['alias' => $alias, 'abstract' => $abstract]);
+        }
+
         $this->bindings[$alias] = &$this->bindings[$abstract];
+    }
+
+    /**
+     * Înregistrează un middleware.
+     *
+     * @param string $name Numele middleware-ului
+     * @param MiddlewareInterface $middleware Instanța middleware-ului
+     */
+    public function registerMiddleware(string $name, MiddlewareInterface $middleware): void
+    {
+        $this->middleware[$name] = $middleware;
+    }
+
+    /**
+     * Execută middleware-urile în lanț.
+     *
+     * @param RequestInterface $request
+     * @param callable $finalHandler
+     * @return ResponseInterface
+     */
+    public function handleMiddleware(RequestInterface $request, callable $finalHandler): ResponseInterface
+    {
+        $middlewareStack = array_values($this->middleware);
+
+        $middlewareChain = array_reduce(
+            array_reverse($middlewareStack),
+            function ($next, $middleware) {
+                return function ($request) use ($next, $middleware) {
+                    return $middleware->handle($request, $next);
+                };
+            },
+            $finalHandler
+        );
+
+        return $middlewareChain($request);
     }
 
     /**
