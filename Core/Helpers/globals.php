@@ -120,3 +120,26 @@ if (!function_exists('loadEnv')) {
         }
     }
 }
+
+if (!function_exists('storage_path')) {
+    function storage_path(string $path = ''): string
+    {
+        // Verifică dacă APP_STORAGE_PATH este definită
+        if (!defined('APP_STORAGE_PATH')) {
+            throw new Exception('Constanta APP_STORAGE_PATH nu este definită.');
+        }
+
+        // Normalizează calea APP_STORAGE_PATH pentru a nu se termina cu un slash
+        $basePath = rtrim(APP_STORAGE_PATH, '/');
+
+        // Construiește calea completă
+        $fullPath = $basePath . '/storage/' . ltrim($path, '/');
+
+        // Verifică dacă directorul există, altfel îl creează
+        if (!file_exists(dirname($fullPath))) {
+            mkdir(dirname($fullPath), 0755, true);
+        }
+
+        return $fullPath;
+    }
+}
