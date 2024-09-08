@@ -20,4 +20,8 @@ $autoloader->autoloadFiles([
 ]);*/
 
 // Register the autoloader after registering the namespaces and files
+<<<<<<< HEAD
 $autoloader->register();
+=======
+$autoloader->register();
+>>>>>>> fe80ac121e947e6bb08b2133a69d2fd50a7477e1
