@@ -3,19 +3,32 @@ namespace sts\config;
 
 class file_config implements config_interface
 {
+    /** @var array $config */
     private static array $config;
+
+    /** @var array $memoryConfig */
     private static array $memoryConfig;
+
+    /** @var bool $needsSave*/
     private static bool $needsSave = false;
+
+    /** @var string $needsSaveFile */
     private static string $needsSaveFile;
 
-    public function __construct() {
-        self::$config = [];
-        self::$memoryConfig = [];
-        self::$needsSave = false;
-        self::$needsSaveFile = '';
-    }
+    /** @var string $php_ext */
+    private string $php_ext = '.php';
 
-    // Implementare metode pentru a încărca configurația din fiș
+    /**
+     * Constructor.
+     * @param array $config
+     */
+    public function __construct() {}
+
+    /**
+     * 
+     * Checks if the configuration is loaded.
+     * @param string $config
+     */
     public function loadConfig(string $config): void
     {
         if (!defined('APP_PATH') || !defined('STS_CONFIG_LOAD')) {
@@ -24,7 +37,8 @@ class file_config implements config_interface
         }
 
         if (!self::isLoaded() && !isset(self::$config[$config])) {
-            $file = STS_CONFIG_LOAD . $config . ".php";
+            
+            $file = STS_CONFIG_LOAD . $config . $this->php_ext;
             
             if (!file_exists($file)) {
                 throw new \RuntimeException(sprintf('Config file not found: %s', $file));
@@ -37,7 +51,9 @@ class file_config implements config_interface
     
     
     /**
+     * 
      * Check if the configuration is loaded.
+     * @return bool
      */
     public static function isLoaded(): bool
     {
@@ -45,13 +61,21 @@ class file_config implements config_interface
     }
 
     /**
-     * Get a configuration value by key.
+     * 
+     * Get a configuration value by key, returns default value if key not found.
+     * @param string $config
+     * @param string $key
+     * @return array|null
+     * @throws \RuntimeException
+     * 
      */
-    public function get(string $config, string $key = null): array|null
+    public function get(string $config, string $key = null): string|null
     {
         if(!self::isLoaded())
+        {
             $this->loadConfig($config);
-
+        }
+        
         if(!isset(self::$config[$config]))
             throw new \RuntimeException(sprintf('Config file not found: %s', self::$config[$config] ?? ''));
 
@@ -59,10 +83,18 @@ class file_config implements config_interface
             self::$memoryConfig[$config] = require_once self::$config[$config];
         }
 
-        return self::getArrayValue(self::$memoryConfig[$config], explode('.', $key));
+        return strval(self::getArrayValue(self::$memoryConfig[$config], $key));
     }
 
-    // Implementare metode pentru a salva configurația în fișier
+    /**
+     * 
+     * Sets a configuration value by key.
+     * @param string $config
+     * @param string $key
+     * @param mixed $value
+     * @return mixed
+     * 
+     */
     public function set(string $config, string $key = null, ?string &$value = ''): void
     {
         if(!self::$config[$config])
@@ -77,9 +109,12 @@ class file_config implements config_interface
 
     /**
      * 
-     * 
+     * Deletes a configuration value by key.
      * @param string $config
      * @param string $key
+     * @return boolean
+     * @throws \RuntimeException
+     * 
      */
     public function delete(string $config, string $key = null): void
     {
@@ -95,16 +130,25 @@ class file_config implements config_interface
     }
 
     /**
+     * 
      * Show all configurations files.
      * @param string $config
      * @param string $key
      * @return array
+     * @throws \RuntimeException
+     * 
      */
     public function all(): array
     {
         return [];
     }
 
+    /**
+     * 
+     * Destructor to save the changes made to the configuration.
+     * @return void
+     * 
+     */
     protected function save(): void
     {
         if (self::$needsSave) {
@@ -116,19 +160,24 @@ class file_config implements config_interface
     }
 
     /**
-     * Helper method to recursively get a value from a multidimensional array.
-     * @param array $array
-     * @param array $keys
+     * Retrieve a value from a multidimensional array using a dot-separated string of keys.
+     *
+     * @param array $array The multidimensional array to search.
+     * @param string $keysString A dot-separated string representing the keys to traverse the array.
+     * @return mixed The value found at the specified keys or null if not found.
      */
-    private static function getArrayValue(array $array, array $keys)
+    private static function getArrayValue(array $array, string $keysString): mixed
     {
+        // Convert the dot-separated string into an array of keys
+        $keys = explode('.', $keysString);
         $value = $array;
 
+        // Traverse the array using the keys
         foreach ($keys as $key) {
             if (is_array($value) && array_key_exists($key, $value)) {
                 $value = $value[$key];
             } else {
-                return null;
+                return null; // Return null if the key does not exist at any level
             }
         }
 

@@ -23,7 +23,7 @@ class file_cache
      */
     public function __construct(\sts\config\file_config &$config)
     {
-        $this->cachePath = rtrim($config->get('cache', 'stores.file.cache.path'), '/') . '/' ?? '/cache';
+        $this->cachePath = rtrim($config->get('cache', 'stores.file.path'), '/') . '/';
         $this->loadCache();
     }
     
@@ -74,6 +74,7 @@ class file_cache
     public function get(string $fileName, string $key = ''): string
     {
         $filePath = $this->setCacheFile($fileName);
+    
         if ($this->validateCacheFile($filePath)) {
             $content = unserialize(file_get_contents($filePath));
             
@@ -81,9 +82,18 @@ class file_cache
                 $this->deleteFile($filePath); // Șterge fișierul dacă este expirat
                 return '';
             }
+    
+            
+            // Verifică dacă conținutul este un array multidimensional
+            if (is_array($content) && $this->isMultidimensional($content)) {
+                // Dacă conținutul este un array multidimensional, parcurge-l pentru a accesa cheia dorită
+                return $this->getArrayValue($content, $key);
+            }
+    
+            // Dacă nu este multidimensional, returnează valoarea corespunzătoare cheii
             return $content[$key] ?? '';
         }
-
+    
         return '';
     }
 
@@ -173,5 +183,45 @@ class file_cache
         if (file_exists($file)) {
             unlink($file);
         }
+    }
+
+        /**
+     * Check if the given array is multidimensional.
+     *
+     * @param array $array The array to check.
+     * @return bool True if the array is multidimensional, false otherwise.
+     */
+    protected function isMultidimensional(array $array): bool
+    {
+        foreach ($array as $element) {
+            if (is_array($element)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Retrieve a value from a multidimensional array using a dot-separated string of keys.
+     *
+     * @param array $array The multidimensional array to search.
+     * @param string $keysString A dot-separated string representing the keys to traverse the array.
+     * @return mixed The value found at the specified keys or null if not found.
+     */
+    private function getArrayValue(array $array, string $keysString): mixed
+    {
+        $keys = explode('.', $keysString);
+        $value = $array;
+
+        foreach ($keys as $key) {
+            if (is_array($value) && array_key_exists($key, $value)) {
+                $value = $value[$key];
+            } else {
+                return ''; // Return null if the key does not exist at any level
+            }
+        }
+
+        return $value;
     }
 }
