@@ -1,4 +1,4 @@
-namespace sts\containers\di;
+namespace sts\container\di;
 
 use \Closure;
 use \ReflectionClass;
