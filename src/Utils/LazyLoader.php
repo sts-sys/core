@@ -1,5 +1,5 @@
 <?php
-namespace STS\Core\Utils;
+namespace sts\core\utils;
 
 class LazyLoader
 {

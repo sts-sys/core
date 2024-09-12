@@ -1,4 +1,5 @@
 <?php
+namespace sts\template;
 
 class TemplateEngine {
     use CompilesDirectives, CompilesConditions, CompilesVariables;

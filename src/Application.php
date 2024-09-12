@@ -1,11 +1,15 @@
 <?php
 // src/Core/Application.php
-namespace MyApp\Core;
+namespace sts\core;
 
-use MyApp\Core\Database\DatabaseManager;
-use MyApp\Core\Utils\FileCache;
-use MyApp\Core\Services\ServiceManager;
+use sts\core\utils\FileCache;
+use sts\core\services\ServiceManager;
+use sts\core\database\DatabaseManager;
 
+/**
+ * Class Application
+ * @package sts\core
+ */
 class Application
 {
     protected $version = '1.0.0'; // Versiunea curentă a aplicației

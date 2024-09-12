@@ -1,7 +1,7 @@
 <?php
-namespace STS\Core\Http\Routing;
+namespace sts\server\Routing;
 
-use STS\Core\Http\{
+use sts\server\{
     Request,
     Response
 };

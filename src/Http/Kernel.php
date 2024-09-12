@@ -1,7 +1,7 @@
 <?php
-namespace STS\Core\Http;
+namespace sts\server;
 
-use STS\Core\Containers\DI\Container;
+use sts\container\container;
 
 class Kernel {
     protected ?Container $container;

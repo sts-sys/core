@@ -1,18 +1,18 @@
 <?php
-namespace sts\events;
+namespace sts\core\events;
 
 use sts\containers\di\container_interface as ContainerInterface;
-use sts\events\event as Event;
+use sts\core\events\event as Event;
 /**
- * Clasa EventManager gestionează evenimentele și ascultătorii de evenimente.
+ * Clasa event_manager gestionează evenimentele și ascultătorii de evenimente.
  */
-class EventManager
+class event_manager
 {
     protected ContainerInterface $container;
     protected array $listeners = [];
 
     /**
-     * Constructorul clasei EventManager.
+     * Constructorul clasei event_manager.
      *
      * @param ContainerInterface $container Containerul de servicii
      */

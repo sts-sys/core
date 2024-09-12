@@ -1,5 +1,5 @@
 <?php
-namespace STS\Core\Http\Routing;
+namespace sts\server\Routing;
 
 class RouteManager {
     // Route management methods here

@@ -1,11 +1,7 @@
 <?php
-// src/Core/Autoloader.php
-declare(strict_types=1);
+namespace sts\core\utils;
 
-namespace STS\Core\Utils;
-require_once dirname(__DIR__) . '/Utils/FileCache.php';
-
-use STS\Core\Utils\FileCache;
+use sts\core\utils\FileCache;
 
 final class Autoloader {
     protected array $classMap = [];

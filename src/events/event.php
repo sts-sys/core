@@ -1,10 +1,10 @@
 <?php
-namespace sts\events;
+namespace sts\core\events;
 
 /**
  * Clasa Event reprezintă un eveniment în aplicație.
  */
-class Event
+class event
 {
     protected string $name;
     protected array $data = [];

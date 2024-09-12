@@ -1,8 +1,12 @@
 <?php
 namespace sts\cache;
 
+<<<<<<< HEAD
+use \RuntimeException;
+=======
 use RuntimeException;
 use sts\config\file_config;
+>>>>>>> 09d69e644898e89c53ad41785ecbfdc7aa7daf7f
 
 /**
  * Class file_cache
@@ -21,9 +25,15 @@ class file_cache
      * Constructor.
      * Initializează calea de cache și încarcă datele din cache.
      */
+<<<<<<< HEAD
+    public function __construct(\sts\core\config\file_config &$config)
+    {
+        $this->cachePath = rtrim($config->get('cache', 'stores.file.cache.path'), '/') . '/' ?? '/cache';
+=======
     public function __construct(\sts\config\file_config &$config)
     {
         $this->cachePath = rtrim($config->get('cache', 'stores.file.path'), '/') . '/';
+>>>>>>> 09d69e644898e89c53ad41785ecbfdc7aa7daf7f
         $this->loadCache();
     }
     
@@ -74,7 +84,11 @@ class file_cache
     public function get(string $fileName, string $key = ''): string
     {
         $filePath = $this->setCacheFile($fileName);
+<<<<<<< HEAD
+        
+=======
     
+>>>>>>> 09d69e644898e89c53ad41785ecbfdc7aa7daf7f
         if ($this->validateCacheFile($filePath)) {
             $content = unserialize(file_get_contents($filePath));
             
@@ -82,6 +96,11 @@ class file_cache
                 $this->deleteFile($filePath); // Șterge fișierul dacă este expirat
                 return '';
             }
+<<<<<<< HEAD
+            return $content[$key] ?? '';
+        }
+
+=======
     
             
             // Verifică dacă conținutul este un array multidimensional
@@ -94,6 +113,7 @@ class file_cache
             return $content[$key] ?? '';
         }
     
+>>>>>>> 09d69e644898e89c53ad41785ecbfdc7aa7daf7f
         return '';
     }
 
@@ -184,6 +204,8 @@ class file_cache
             unlink($file);
         }
     }
+<<<<<<< HEAD
+=======
 
         /**
      * Check if the given array is multidimensional.
@@ -224,4 +246,5 @@ class file_cache
 
         return $value;
     }
+>>>>>>> 09d69e644898e89c53ad41785ecbfdc7aa7daf7f
 }

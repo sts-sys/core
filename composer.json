@@ -4,7 +4,7 @@
     "type": "library",
     "keywords": ["core", "sts", "library", "framework"],
     "license": "MIT",
-    "version": "1.1.2-dev",
+    "version": "v1.1.3",
     "prefer-stable": true,
     "authors": [
         {
@@ -14,11 +14,37 @@
     ],
     "autoload": {
         "psr-4": {
-            "sts\\": "src/"
+            "sts\\core\\": "src/",
+            "sts\\tests\\": "tests/",
+            "sts\\container\\": "src/container/di/",
+            "sts\\server\\": "src/http/",
+            "sts\\cache\\": "src/cache/",
+            "sts\\db\\": "src/db/connection/",
+            "sts\\logger\\": "src/debug/",
+            "sts\\queue\\": "src/queue/",
+            "sts\\exception\\": "src/exception/",
+            "sts\\template\\": "src/template/"
         }
     },
     "require": {
-        "php": "^8.0",
-        "sts/logger": "^v1.0"
-    }
+        "php": "^8.0"
+    },
+
+    "require-dev": {
+        "sts/logger": "v1.0.1.x-dev"
+    },
+
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/sts-sys/logger"
+        },
+        
+        {
+            "type": "vcs",
+            "url": "https://github.com/sts-sys/core"
+        }
+    ],
+
+    "minimum-stability": "dev"
 }

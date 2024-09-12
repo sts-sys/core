@@ -1,4 +1,6 @@
 <?php
+namespace sts\template\Traits;
+
 trait CompilesDirectives {
     protected function compileDirectives(string $content): string {
         // Compilare pentru sintaxa @directive

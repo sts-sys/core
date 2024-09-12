@@ -1,8 +1,8 @@
 <?php
 namespace sts\server\middlewares;
 
-use STS\Core\Http\Request as RequestInterface;
-use STS\Core\Http\Response as ResponseInterface;
+use sts\server\Request as RequestInterface;
+use sts\server\Response as ResponseInterface;
 use sts\server\middlewares\MiddlewareInterface;
 
 class CoreMiddleware implements MiddlewareInterface {

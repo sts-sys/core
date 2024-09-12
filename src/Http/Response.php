@@ -1,5 +1,5 @@
 <?php
-namespace STS\Core\Http;
+namespace sts\server;
 
 class Response {
     protected int $statusCode = 200;

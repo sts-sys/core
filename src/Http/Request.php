@@ -1,5 +1,5 @@
 <?php
-namespace STS\Core\Http;
+namespace sts\server;
 
 use STS\Core\Http\Response as ResponseInterface;
 
