@@ -20,7 +20,7 @@ if (!function_exists('container')) {
     function container(string $make = null)
     {
         // Obține instanța singleton a containerului
-        $instance = \STS\Core\Containers\DI\Container::getInstance();
+        $instance = \sts\container\container::getInstance();
 
         // Dacă nu se specifică un serviciu de creat, returnează instanța containerului
         if (is_null($make)) {

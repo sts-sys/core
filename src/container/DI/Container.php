@@ -1,73 +1,119 @@
 <?php
-namespace STS\Core\Containers\DI;
+namespace sts\container;
 
 use \Closure;
 use \ReflectionClass;
-use STS\Core\Exceptions\CoreException;
-use STS\Core\Events\EventDispatcher;
-use STS\Core\Http\Middlewares\MiddlewareInterface;
-use STS\Core\Http\Request as RequestInterface;
-use STS\Core\Http\Response as ResponseInterface;
+use sts\server\middlewares\MiddlewareInterface;
+use sts\server\Request as RequestInterface;
+use sts\server\Response as ResponseInterface;
+use sts\core\events\event_manager as EventDispatcher;
 
-class Container {
-        /**
-     * Registrul serviciilor în container.
+/**
+ * Class Container
+ * 
+ * Container de servicii pentru gestionarea dependențelor, instanțelor singleton, middleware-urilor,
+ * evenimentelor și parametrilor configurabili într-o aplicație PHP.
+ */
+class container
+{
+    /**
+     * Definiții de servicii și aliasuri.
      *
      * @var array
      */
     protected array $bindings = [];
 
     /**
-     * Instanțele de servicii unice (singleton).
+     * Instanțe de servicii pentru singleton-uri.
      *
      * @var array
      */
     protected array $instances = [];
 
     /**
-     * Instanta singleton a containerului.
-     * 
-     * @var self|null $instance
+     * Instanța singleton a containerului.
+     *
+     * @var self|null
      */
-    protected static ?self $instance = null; // Instanța singleton a containerului
+    protected static ?self $instance = null;
 
     /**
      * Cache pentru reflecții.
      *
      * @var array
      */
-    protected array $reflectionCache = []; // Cache pentru reflecții
+    protected array $reflectionCache = [];
 
     /**
-     * Rezolvarea unei dependente in container.
-     * 
+     * Cache pentru dependențe rezolvate.
+     *
      * @var array
      */
-    protected array $resolvedDependenciesCache = []; // Cache pentru dependențe rezolvate
+    protected array $resolvedDependenciesCache = [];
 
     /**
-     * Adăugă un eveniment in container.
-     * 
-     * @var EventDispatcher 
+     * Dispatcher de evenimente pentru gestionarea evenimentelor în cadrul containerului.
+     *
+     * @var EventDispatcher
      */
-    protected EventDispatcher $dispatcher; // Adăugăm EventDispatcher
+    protected EventDispatcher $dispatcher;
 
     /**
      * Middleware-uri înregistrate.
      *
      * @var array
      */
-    protected array $middleware = []; // Middleware-uri înregistrate
+    protected array $middleware = [];
+
+    /**
+     * Servicii marcate pentru încărcare târzie (lazy-loaded).
+     *
+     * @var array
+     */
+    protected array $lazyServices = [];
+
+    /**
+     * Decoratori pentru servicii.
+     *
+     * @var array
+     */
+    protected array $decorators = [];
+
+    /**
+     * Grupuri de servicii (tag-uri).
+     *
+     * @var array
+     */
+    protected array $tags = [];
+
+    /**
+     * Parametri configurabili.
+     *
+     * @var array
+     */
+    protected array $parameters = [];
+
+    /**
+     * Instanțe de servicii pentru scopuri (scoped).
+     *
+     * @var array
+     */
+    protected array $scopedInstances = [];
+
+    /**
+     * Scopul curent al containerului.
+     *
+     * @var string|null
+     */
+    protected ?string $currentScope = null;
 
     /**
      * Constructor privat pentru a preveni instanțierea directă.
-     * 
-     * @param EventDispatcher $dispatcher
-     * @return void
+     * Inițializează dispatcher-ul de evenimente.
      */
     private function __construct()
     {
-        $this->dispatcher = new EventDispatcher(); // Inițializăm EventDispatcher
+        $this->dispatcher = new EventDispatcher();
     }
 
     /**
@@ -80,19 +126,20 @@ class Container {
         if (self::$instance === null) {
             self::$instance = new self();
         }
-
         return self::$instance;
     }
 
     /**
-     * Înregistrează o instanță de serviciu în container.
+     * Înregistrează un serviciu în container.
      *
      * @param string $abstract Numele serviciului
      * @param mixed $concrete Instanța sau funcția de creare a instanței
      * @param bool $shared True dacă serviciul este singleton
-     * @return void
+     * @param bool $lazy True dacă serviciul trebuie încărcat târziu
+     * @param array $tags Etichete pentru gruparea serviciilor
+     * @param string|null $alias Alias opțional pentru serviciu
      */
-    public function bind(string $abstract, $concrete, bool $shared = false): void
+    public function bind(string $abstract, $concrete, bool $shared = false, bool $lazy = false, array $tags = [], ?string $alias = null): void
     {
         if (!$concrete instanceof Closure) {
             $concrete = function () use ($concrete) {
@@ -100,84 +147,59 @@ class Container {
             };
         }
         $this->bindings[$abstract] = compact('concrete', 'shared');
+
+        if ($lazy) {
+            $this->lazyServices[$abstract] = true;
+        }
+
+        if ($alias) {
+            $this->bindings[$alias] = &$this->bindings[$abstract];  // Alias către serviciul original
+        }
+
+        foreach ($tags as $tag) {
+            $this->tags[$tag][] = $abstract;
+        }
     }
 
-        /**
+    /**
      * Înregistrează o instanță unică (singleton) în container.
      *
      * @param string $abstract Numele serviciului
      * @param mixed $concrete Instanța sau funcția de creare a instanței
-     * @return void
      */
     public function singleton(string $abstract, $concrete): void
     {
         $this->bind($abstract, $concrete, true);
     }
 
-        /**
+    /**
      * Obține o instanță de serviciu din container.
      *
      * @param string $abstract Numele serviciului
      * @return mixed
-     * @throws Exception
+     * @throws CoreException Dacă serviciul nu poate fi rezolvat
      */
     public function get(string $abstract)
     {
-        // Verifică dacă instanța a fost deja creată (singleton)
         if (isset($this->instances[$abstract])) {
-            return $this->instances[$abstract];
+            return $this->applyDecorators($abstract, $this->instances[$abstract]);
         }
 
-        // Verifică dacă serviciul este înregistrat în container
         if (isset($this->bindings[$abstract])) {
             $binding = $this->bindings[$abstract];
 
-            // Creează instanța folosind funcția 'concrete' sau direct prin numele clasei
-            $object = is_callable($binding['concrete']) 
-                ? $binding['concrete']($this) 
-                : new $binding['concrete']();
-
-            // Stochează instanța dacă este un serviciu 'shared' (singleton)
-            if ($binding['shared']) {
-                $this->instances[$abstract] = $object;
+            if (isset($this->lazyServices[$abstract])) {
+                $this->instances[$abstract] = $this->make($abstract);
+                return $this->applyDecorators($abstract, $this->instances[$abstract]);
+            } else {
+                return $this->applyDecorators($abstract, $this->make($abstract));
             }
-
-            // Trimite un eveniment de tip 'service.resolved' după rezolvarea serviciului
-            if ($this->dispatcher) {
-                $this->dispatcher->dispatch('service.resolved', [$abstract, $object]);
-            }
-
-            return $object;
         }
 
-        // Dacă serviciul nu este înregistrat, încearcă să rezolve direct numele clasei
-        return $this->resolve($abstract);
+        return $this->make($abstract);
     }
 
-    /*public function get(string $abstract)
-    {
-        if (isset($this->instances[$abstract])) {
-            return $this->instances[$abstract];
-        }
-
-        if (isset($this->bindings[$abstract])) {
-            $binding = $this->bindings[$abstract];
-            $object = $binding['concrete']();
-
-            if ($binding['shared']) {
-                $this->instances[$abstract] = $object;
-            }
-
-            // Trimite un eveniment de tip 'service.resolved' după rezolvarea serviciului
-            $this->dispatcher->dispatch('service.resolved', $abstract, $object);
-
-            return $object;
-        }
-
-        return $this->resolve($abstract);
-    }*/
-
-        /**
+    /**
      * Verifică dacă containerul are un serviciu înregistrat.
      *
      * @param string $abstract Numele serviciului
@@ -189,53 +211,48 @@ class Container {
     }
 
     /**
-     * Rezolvă dependențele pentru serviciul specificat.
+     * Rezolvă o instanță a serviciului specificat.
      *
      * @param string $abstract Numele serviciului
      * @return mixed
-     * @throws CoreException
+     * @throws CoreException Dacă clasa nu există sau dependențele nu pot fi rezolvate
      */
     protected function resolve(string $abstract)
     {
-        // Verifică dacă clasa există
         if (!class_exists($abstract)) {
             throw new CoreException("Class {$abstract} does not exist.", 1002, ['class' => $abstract], 'critical');
         }
-    
-        // Utilizează cache-ul pentru reflecție, dacă există
+
         if (isset($this->reflectionCache[$abstract])) {
             $reflection = $this->reflectionCache[$abstract];
         } else {
             $reflection = new ReflectionClass($abstract);
             $this->reflectionCache[$abstract] = $reflection;
         }
-    
+
         $constructor = $reflection->getConstructor();
-    
-        // Creează o instanță direct dacă nu există constructor
+
         if (is_null($constructor)) {
             $instance = new $abstract;
         } else {
-            // Obține dependențele constructorului
             $parameters = $constructor->getParameters();
             $dependencies = $this->resolveDependencies($parameters);
             $instance = $reflection->newInstanceArgs($dependencies);
         }
-    
-        // Trimite un eveniment de tip 'service.resolved' după crearea instanței
+
         if ($this->dispatcher) {
             $this->dispatcher->dispatch('service.resolved', [$abstract, $instance]);
         }
-    
+
         return $instance;
     }
-    
+
     /**
      * Rezolvă dependențele constructorului unei clase.
      *
      * @param array $parameters Lista de parametri ai constructorului
-     * @return array
-     * @throws CoreException
+     * @return array Lista dependențelor rezolvate
+     * @throws CoreException Dacă o dependență nu poate fi rezolvată
      */
     protected function resolveDependencies(array $parameters): array
     {
@@ -243,29 +260,26 @@ class Container {
 
         foreach ($parameters as $parameter) {
             $type = $parameter->getType();
-    
-            // Verifică dacă tipul este definit și este de tip ReflectionNamedType
+
             if ($type instanceof \ReflectionNamedType && !$type->isBuiltin()) {
                 $dependencies[] = $this->get($type->getName());
             } else {
-                // Dacă parametrul nu este de un tip de clasă, tratează-l ca o excepție sau oferă o valoare implicită
                 if ($parameter->isDefaultValueAvailable()) {
                     $dependencies[] = $parameter->getDefaultValue();
                 } else {
-                    throw new Exception("Nu pot rezolva dependența pentru parametru: " . $parameter->getName());
+                    throw new CoreException("Cannot resolve dependency for parameter: " . $parameter->getName(), 1004);
                 }
             }
         }
-    
+
         return $dependencies;
     }
 
     /**
-     * Dezaloca resursele utilizate in container.
-     * 
-     * @param string $abstract
-     * @param mixed $instance
-     * @return void
+     * Stochează o instanță în container.
+     *
+     * @param string $abstract Numele serviciului
+     * @param mixed $instance Instanța de serviciu
      */
     public function instance(string $abstract, $instance): void
     {
@@ -273,10 +287,9 @@ class Container {
     }
 
     /**
-     * Elimină o instanță din container pentru a elibera memoria.
+     * Elimină o instanță din container.
      *
      * @param string $abstract Numele serviciului
-     * @return void
      */
     public function forget(string $abstract): void
     {
@@ -288,18 +301,16 @@ class Container {
      *
      * @param string $alias Numele aliasului
      * @param string $abstract Numele serviciului
-     * @return void
-     * @throws CoreException
+     * @throws CoreException Dacă serviciul nu este înregistrat
      */
     public function alias(string $alias, string $abstract): void
     {
         if (!isset($this->bindings[$abstract])) {
-            throw new CoreException("Serviciul {$abstract} nu este înregistrat în container.", 1003, ['alias' => $alias, 'abstract' => $abstract]);
+            throw new CoreException("Service {$abstract} is not registered in the container.", 1003, ['alias' => $alias, 'abstract' => $abstract]);
         }
 
         $this->bindings[$alias] = &$this->bindings[$abstract];
     }
-
 
     /**
      * Înregistrează un middleware.
@@ -315,9 +326,9 @@ class Container {
     /**
      * Execută middleware-urile în lanț.
      *
-     * @param RequestInterface $request
-     * @param callable $finalHandler
-     * @return ResponseInterface
+     * @param RequestInterface $request Cererea HTTP
+     * @param callable $finalHandler Handler-ul final de procesare
+     * @return ResponseInterface Răspunsul HTTP
      */
     public function handleMiddleware(RequestInterface $request, callable $finalHandler): ResponseInterface
     {
@@ -337,11 +348,10 @@ class Container {
     }
 
     /**
-     * 
-     * 
-     * @param string $event
-     * @param callable $listener
-     * @return void
+     * Înregistrează un ascultător de eveniment.
+     *
+     * @param string $event Numele evenimentului
+     * @param callable $listener Funcția ascultătorului
      */
     public function on(string $event, callable $listener): void
     {
@@ -349,11 +359,10 @@ class Container {
     }
 
     /**
-     * 
-     * 
-     * @param string $event
-     * @param callable $listener
-     * @return void
+     * Elimină un ascultător de eveniment.
+     *
+     * @param string $event Numele evenimentului
+     * @param callable $listener Funcția ascultătorului
      */
     public function off(string $event, callable $listener): void
     {
@@ -363,11 +372,28 @@ class Container {
     /**
      * Apelează o metodă pe o instanță.
      *
-     * @param callable $callback
-     * @return mixed
+     * @param callable $callback Funcția callback
+     * @return mixed Rezultatul apelului funcției
      */
     public function call(callable $callback)
     {
         return call_user_func($callback);
+    }
+
+    /**
+     * Aplică decoratorii asupra unui serviciu.
+     *
+     * @param string $name Numele serviciului
+     * @param mixed $instance Instanța serviciului
+     * @return mixed Instanța decorată
+     */
+    protected function applyDecorators(string $name, $instance)
+    {
+        if (isset($this->decorators[$name])) {
+            foreach ($this->decorators[$name] as $decorator) {
+                $instance = $decorator($instance);
+            }
+        }
+        return $instance;
     }
 }
