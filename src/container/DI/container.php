@@ -1,12 +1,12 @@
-namespace sts\container\di;
+<?php
+namespace sts\container;
 
 use \Closure;
 use \ReflectionClass;
-use STS\Core\Exceptions\CoreException;
-use STS\Core\Events\EventDispatcher;
-use STS\Core\Http\Middlewares\MiddlewareInterface;
-use STS\Core\Http\Request as RequestInterface;
-use STS\Core\Http\Response as ResponseInterface;
+use sts\server\middlewares\MiddlewareInterface;
+use sts\server\Request as RequestInterface;
+use sts\server\Response as ResponseInterface;
+use sts\core\events\event_manager as EventDispatcher;
 
 /**
  * Class Container

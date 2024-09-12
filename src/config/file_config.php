@@ -1,5 +1,4 @@
 <?php
-<<<<<<< HEAD
 namespace sts\core\config;
 
 class file_config implements config_interface
@@ -8,47 +7,17 @@ class file_config implements config_interface
     private static array $memoryConfig;
     private static bool $needsSave = false;
     private static string $needsSaveFile;
+    private static string $php_ext;
 
     public function __construct() {
         self::$config = [];
         self::$memoryConfig = [];
         self::$needsSave = false;
         self::$needsSaveFile = '';
+        self::$php_ext = '.php';
     }
 
     // Implementare metode pentru a încărca configurația din fiș
-=======
-namespace sts\config;
-
-class file_config implements config_interface
-{
-    /** @var array $config */
-    private static array $config;
-
-    /** @var array $memoryConfig */
-    private static array $memoryConfig;
-
-    /** @var bool $needsSave*/
-    private static bool $needsSave = false;
-
-    /** @var string $needsSaveFile */
-    private static string $needsSaveFile;
-
-    /** @var string $php_ext */
-    private string $php_ext = '.php';
-
-    /**
-     * Constructor.
-     * @param array $config
-     */
-    public function __construct() {}
-
-    /**
-     * 
-     * Checks if the configuration is loaded.
-     * @param string $config
-     */
->>>>>>> 09d69e644898e89c53ad41785ecbfdc7aa7daf7f
     public function loadConfig(string $config): void
     {
         if (!defined('APP_PATH') || !defined('STS_CONFIG_LOAD')) {
@@ -57,12 +26,7 @@ class file_config implements config_interface
         }
 
         if (!self::isLoaded() && !isset(self::$config[$config])) {
-<<<<<<< HEAD
-            $file = STS_CONFIG_LOAD . $config . ".php";
-=======
-            
-            $file = STS_CONFIG_LOAD . $config . $this->php_ext;
->>>>>>> 09d69e644898e89c53ad41785ecbfdc7aa7daf7f
+            $file = STS_CONFIG_LOAD . $config . self::$php_ext;
             
             if (!file_exists($file)) {
                 throw new \RuntimeException(sprintf('Config file not found: %s', $file));
@@ -75,13 +39,7 @@ class file_config implements config_interface
     
     
     /**
-<<<<<<< HEAD
      * Check if the configuration is loaded.
-=======
-     * 
-     * Check if the configuration is loaded.
-     * @return bool
->>>>>>> 09d69e644898e89c53ad41785ecbfdc7aa7daf7f
      */
     public static function isLoaded(): bool
     {
@@ -89,15 +47,6 @@ class file_config implements config_interface
     }
 
     /**
-<<<<<<< HEAD
-     * Get a configuration value by key.
-     */
-    public function get(string $config, string $key = null): array|null
-    {
-        if(!self::isLoaded())
-            $this->loadConfig($config);
-
-=======
      * 
      * Get a configuration value by key, returns default value if key not found.
      * @param string $config
@@ -113,7 +62,6 @@ class file_config implements config_interface
             $this->loadConfig($config);
         }
         
->>>>>>> 09d69e644898e89c53ad41785ecbfdc7aa7daf7f
         if(!isset(self::$config[$config]))
             throw new \RuntimeException(sprintf('Config file not found: %s', self::$config[$config] ?? ''));
 
@@ -121,12 +69,6 @@ class file_config implements config_interface
             self::$memoryConfig[$config] = require_once self::$config[$config];
         }
 
-<<<<<<< HEAD
-        return self::getArrayValue(self::$memoryConfig[$config], explode('.', $key));
-    }
-
-    // Implementare metode pentru a salva configurația în fișier
-=======
         return strval(self::getArrayValue(self::$memoryConfig[$config], $key));
     }
 
@@ -139,7 +81,6 @@ class file_config implements config_interface
      * @return mixed
      * 
      */
->>>>>>> 09d69e644898e89c53ad41785ecbfdc7aa7daf7f
     public function set(string $config, string $key = null, ?string &$value = ''): void
     {
         if(!self::$config[$config])
@@ -154,18 +95,12 @@ class file_config implements config_interface
 
     /**
      * 
-<<<<<<< HEAD
-     * 
-     * @param string $config
-     * @param string $key
-=======
      * Deletes a configuration value by key.
      * @param string $config
      * @param string $key
      * @return boolean
      * @throws \RuntimeException
      * 
->>>>>>> 09d69e644898e89c53ad41785ecbfdc7aa7daf7f
      */
     public function delete(string $config, string $key = null): void
     {
@@ -181,34 +116,25 @@ class file_config implements config_interface
     }
 
     /**
-<<<<<<< HEAD
-=======
      * 
->>>>>>> 09d69e644898e89c53ad41785ecbfdc7aa7daf7f
      * Show all configurations files.
      * @param string $config
      * @param string $key
      * @return array
-<<<<<<< HEAD
-=======
      * @throws \RuntimeException
      * 
->>>>>>> 09d69e644898e89c53ad41785ecbfdc7aa7daf7f
      */
     public function all(): array
     {
         return [];
     }
 
-<<<<<<< HEAD
-=======
     /**
      * 
      * Destructor to save the changes made to the configuration.
      * @return void
      * 
      */
->>>>>>> 09d69e644898e89c53ad41785ecbfdc7aa7daf7f
     protected function save(): void
     {
         if (self::$needsSave) {
@@ -220,16 +146,6 @@ class file_config implements config_interface
     }
 
     /**
-<<<<<<< HEAD
-     * Helper method to recursively get a value from a multidimensional array.
-     * @param array $array
-     * @param array $keys
-     */
-    private static function getArrayValue(array $array, array $keys)
-    {
-        $value = $array;
-
-=======
      * Retrieve a value from a multidimensional array using a dot-separated string of keys.
      *
      * @param array $array The multidimensional array to search.
@@ -243,16 +159,11 @@ class file_config implements config_interface
         $value = $array;
 
         // Traverse the array using the keys
->>>>>>> 09d69e644898e89c53ad41785ecbfdc7aa7daf7f
         foreach ($keys as $key) {
             if (is_array($value) && array_key_exists($key, $value)) {
                 $value = $value[$key];
             } else {
-<<<<<<< HEAD
-                return null;
-=======
                 return null; // Return null if the key does not exist at any level
->>>>>>> 09d69e644898e89c53ad41785ecbfdc7aa7daf7f
             }
         }
 

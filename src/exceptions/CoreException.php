@@ -1,5 +1,5 @@
 <?php
-namespace STS\Core\Exceptions;
+namespace sts\exception\exceptions;
 
 use \Exception;
 use \Throwable;

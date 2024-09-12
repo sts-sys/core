@@ -4,7 +4,7 @@
     "type": "library",
     "keywords": ["core", "sts", "library", "framework"],
     "license": "MIT",
-    "version": "v1.1.3",
+    "version": "1.0.x-dev",
     "prefer-stable": true,
     "authors": [
         {
@@ -19,17 +19,14 @@
             "sts\\container\\": "src/container/di/",
             "sts\\server\\": "src/http/",
             "sts\\cache\\": "src/cache/",
-            "sts\\db\\": "src/db/connection/",
-            "sts\\logger\\": "src/debug/",
+            "sts\\db\\": "src/database/",
             "sts\\queue\\": "src/queue/",
             "sts\\exception\\": "src/exception/",
             "sts\\template\\": "src/template/"
         }
     },
     "require": {
-        "php": "^8.0",
-        "twig/twig": "^3.3",
-        "phpmailer/phpmailer": "^6.9.1"
+        "php": "^8.0"
     },
 
     "require-dev": {
@@ -40,11 +37,6 @@
         {
             "type": "vcs",
             "url": "https://github.com/sts-sys/logger"
-        },
-        
-        {
-            "type": "vcs",
-            "url": "https://github.com/sts-sys/core"
         }
     ],
 

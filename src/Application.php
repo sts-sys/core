@@ -3,8 +3,6 @@
 namespace sts\core;
 
 use sts\core\utils\FileCache;
-use sts\core\services\ServiceManager;
-use sts\core\database\DatabaseManager;
 
 /**
  * Class Application
@@ -21,8 +19,6 @@ class Application
     public function __construct()
     {
         $this->cache = new FileCache(__DIR__ . '/../../cache/app_cache.php');
-        $this->services = new ServiceManager();
-        $this->database = new DatabaseManager();
     }
 
     public function run()

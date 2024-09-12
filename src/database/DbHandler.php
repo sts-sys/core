@@ -4,7 +4,7 @@ namespace sts\db;
 use \PDO;
 use \PDOException;
 use sts\cache\driver_interface as CacheDriver;
-use sts\db\connection\DbInterface;
+use sts\db\DbInterface;
 
 class DbHandler extends PDO implements DbInterface
 {
